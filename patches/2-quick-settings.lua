@@ -37,6 +37,8 @@ local PATCH_L10N = {
         -- Confirmations
         ["Are you sure you want to restart KOReader?"] = "Are you sure you want to restart KOReader?",
         ["Are you sure you want to exit KOReader?"] = "Are you sure you want to exit KOReader?",
+        ["Is OPDS plugin activated ?"] = "Is OPDS plugin activated ?",
+        ["Other"] = "Other",
         -- Actions
         ["Restart"] = "Restart",
         ["Exit"] = "Exit",
@@ -60,17 +62,20 @@ local PATCH_L10N = {
         ["Actions"] = "Actions",
         ["Arrange actions"] = "Arrange actions",
         ["Arrange quick settings actions"] = "Arrange quick settings actions",
-        ["Show actions buttons"] = "Show actions buttons",
-        ["Show frontlight slider"] = "Show frontlight slider",
-        ["Show warmth slider"] = "Show warmth slider",
-        ["Show locations buttons"] = "Show locations buttons",
-        ["Show skim slider"] = "Show skim slider",
+        ["Show actions controls"] = "Show actions controls",
+        ["Show frontlight controls"] = "Show frontlight controls",
+        ["Show warmth controls"] = "Show warmth controls",
+        ["Show location controls"] = "Show location controls",
+        ["Show search controls"] = "Show search controls",
+        ["Show skim controls"] = "Show skim controls",
         ["Always open on this tab"] = "Always open on this tab"
     },
     fr = {
         -- Confirmations
         ["Are you sure you want to restart KOReader?"] = "Êtes vous sur de vouloir redémarrer KOReader?",
         ["Are you sure you want to exit KOReader?"] = "Êtes vous sur de vouloir quitter KOReader?",
+        ["Is OPDS plugin activated ?"] = "Le plugin OPDS est-il activé ?",
+        ["Other"] = "Autre",
         -- Actions
         ["Restart"] = "Redémarrer",
         ["Exit"] = "Quitter",
@@ -94,17 +99,20 @@ local PATCH_L10N = {
         ["Actions"] = "Actions",
         ["Arrange actions"] = "Organiser les actions",
         ["Arrange quick settings actions"] = "Organiser les actions de la configuration rapide",
-        ["Show actions buttons"] = "Afficher les boutons d'action",
-        ["Show frontlight slider"] = "Afficher le contrôle d'éclairage",
-        ["Show warmth slider"] = "Afficher le contrôle de température",
-        ["Show locations buttons"] = "Afficher les boutons d'emplacement",
-        ["Show skim slider"] = "Afficher le contrôle de feuilletage",
+        ["Show actions controls"] = "Afficher les contrôles d'action",
+        ["Show frontlight controls"] = "Afficher les contrôles d'éclairage",
+        ["Show warmth controls"] = "Afficher les contrôles de température",
+        ["Show location controls"] = "Afficher les contrôles d'emplacement",
+        ["Show search controls"] = "Afficher les contrôles de recherche",
+        ["Show skim controls"] = "Afficher les contrôles de feuilletage",
         ["Always open on this tab"] = "Toujours ouvrir sur cet onglet"
     },
     pt = {
         -- Confirmations
         ["Are you sure you want to restart KOReader?"] = "Tem certeza que deseja reiniciar o KOReader?",
         ["Are you sure you want to exit KOReader?"] = "Tem certeza que deseja sair do KOReader?",
+        ["Is OPDS plugin activated ?"] = "O plugin OPDS está ativado ?",
+        ["Other"] = "Outro",
         -- Actions
         ["Restart"] = "Reiniciar",
         ["Exit"] = "Sair",
@@ -128,11 +136,12 @@ local PATCH_L10N = {
         ["Actions"] = "Acções",
         ["Arrange actions"] = "Organizar acções",
         ["Arrange quick settings actions"] = "Organizar acções das configurações rápidas",
-        ["Show actions buttons"] = "Mostrar botões de ação",
-        ["Show frontlight slider"] = "Mostrar controle de luz frontal",
-        ["Show warmth slider"] = "Mostrar controle de temperatura",
-        ["Show locations buttons"] = "Mostrar botões de locations",
-        ["Show skim slider"] = "Mostrar controle de skim",
+        ["Show actions controls"] = "Mostrar controles de ação",
+        ["Show frontlight controls"] = "Mostrar controles de luz frontal",
+        ["Show warmth controls"] = "Mostrar controles de temperatura",
+        ["Show location controls"] = "Mostrar controles de locations",
+        ["Show search controls"] = "Mostrar controles de pesquisa",
+        ["Show skim controls"] = "Mostrar controles de skim",
         ["Always open on this tab"] = "Sempre abrir nesta aba"
     }
 }
@@ -194,6 +203,7 @@ local config_default = {
     show_frontlight = true,
     show_warmth = true,
     show_location = true,
+    show_search = true,
     show_skim = true,
     open_on_start = true
 }
@@ -344,7 +354,7 @@ local action_defs = {
         icon = "quick_usb",
         label = _("USB"),
         callback = function()
-            if Device:canToggleMassStorage() then
+            if Device.canToggleMassStorage and Device:canToggleMassStorage() then
                 UIManager:broadcastEvent(Event:new("RequestUSBMS"))
             end
         end
@@ -568,13 +578,15 @@ local function createQuickSettingsPanel(touch_menu)
     -- ----- Frontlight section -----
 
     local medium_font = Font:getFace("ffont")
-    local small_btn_width = Screen:scaleBySize(50)
-    local slider_gap = Screen:scaleBySize(4)
-    local slider_width = inner_width - 2 * small_btn_width - 2 * slider_gap
     local section_span = VerticalSpan:new{ width = Screen:scaleBySize(8) }
 
     local frontlight_group = VerticalGroup:new{ align = "center" }
     if config.show_frontlight then
+        -- variable
+        local frontlight_btn_width = Screen:scaleBySize(50)
+        local frontlight_gap = Screen:scaleBySize(4)
+        local frontlight_slider_width = inner_width - 2 * frontlight_btn_width - 2 * frontlight_gap
+
         -- Frontlight state
         local fl = {
             min = powerd.fl_min,
@@ -604,17 +616,17 @@ local function createQuickSettingsPanel(touch_menu)
         -- Create buttons first to measure height
         local fl_minus = Button:new{
             text = "−",
-            width = small_btn_width,
+            width = frontlight_btn_width,
             show_parent = touch_menu.show_parent,
             callback = function() end, -- placeholder, set below
             hold_callback = function() end -- placeholder, set below
         }
 
-        local btn_height = fl_minus:getSize().h
+        local frontlight_btn_height = fl_minus:getSize().h
 
         local fl_progress = ProgressWidget:new{
-            width = slider_width,
-            height = btn_height,
+            width = frontlight_slider_width,
+            height = frontlight_btn_height,
             percentage = fl.cur / fl.max,
             ticks = fl_ticks,
             tick_width = Screen:scaleBySize(0.5),
@@ -643,7 +655,7 @@ local function createQuickSettingsPanel(touch_menu)
 
         local fl_plus = Button:new{
             text = "＋",
-            width = small_btn_width,
+            width = frontlight_btn_width,
             show_parent = touch_menu.show_parent,
             callback = function() setBrightness(fl.cur + 1) end,
             hold_callback = function() setBrightness(fl.max) end
@@ -653,11 +665,11 @@ local function createQuickSettingsPanel(touch_menu)
         local fl_row = HorizontalGroup:new{
             align = "center",
             fl_minus,
-            HorizontalSpan:new{ width = slider_gap },
+            HorizontalSpan:new{ width = frontlight_gap },
             fl_progress,
-            HorizontalSpan:new{ width = slider_gap },
+            HorizontalSpan:new{ width = frontlight_gap },
             fl_plus,
-            HorizontalSpan:new{ width = slider_gap },
+            HorizontalSpan:new{ width = frontlight_gap },
         }
 
         -- Store progress ref for tap/pan handling
@@ -674,12 +686,17 @@ local function createQuickSettingsPanel(touch_menu)
 
     local warmth_group = VerticalGroup:new{ align = "center" }
     if config.show_warmth and Device:hasNaturalLight() then
-        local btn_height_warmth
+        -- variable
+        local warmth_btn_width = Screen:scaleBySize(50)
+        local warmth_gap = Screen:scaleBySize(4)
+        local warmth_slider_width = inner_width - 2 * warmth_btn_width - 2 * warmth_gap
+        local warmth_btn_height
+
         if not config.show_frontlight then
-            local tmp = Button:new{ text = "−", width = small_btn_width, show_parent = touch_menu.show_parent, callback = function() end }
-            btn_height_warmth = tmp:getSize().h
+            local tmp = Button:new{ text = "−", width = warmth_btn_width, show_parent = touch_menu.show_parent, callback = function() end }
+            warmth_btn_height = tmp:getSize().h
         else
-            btn_height_warmth = Button:new{ text = "−", width = small_btn_width, show_parent = touch_menu.show_parent, callback = function() end }:getSize().h
+            warmth_btn_height = Button:new{ text = "−", width = warmth_btn_width, show_parent = touch_menu.show_parent, callback = function() end }:getSize().h
         end
 
         local nl = {
@@ -695,7 +712,6 @@ local function createQuickSettingsPanel(touch_menu)
         end
         nl_num_buttons = math.min(nl_num_buttons, nl_steps)
 
-        local warmth_slider_width = inner_width - 2 * small_btn_width - 2 * slider_gap
 
         local nl_label = TextWidget:new{
             text = _("Warmth") .. ": " .. tostring(nl.cur),
@@ -705,7 +721,7 @@ local function createQuickSettingsPanel(touch_menu)
 
         local nl_progress = ButtonProgressWidget:new{
             width = warmth_slider_width,
-            height = btn_height_warmth,
+            height = warmth_btn_height,
             font_size = 20,
             padding = 0,
             thin_grey_style = false,
@@ -736,14 +752,14 @@ local function createQuickSettingsPanel(touch_menu)
 
         local nl_minus = Button:new{
             text = "−",
-            width = small_btn_width,
+            width = warmth_btn_width,
             show_parent = touch_menu.show_parent,
             callback = function() setWarmth(nl.cur - 1) end,
             hold_callback = function() setWarmth(nl.min) end,
         }
         local nl_plus = Button:new{
             text = "＋",
-            width = small_btn_width,
+            width = warmth_btn_width,
             show_parent = touch_menu.show_parent,
             callback = function() setWarmth(nl.cur + 1) end,
             hold_callback = function() setWarmth(nl.max) end
@@ -753,9 +769,9 @@ local function createQuickSettingsPanel(touch_menu)
         local nl_row = HorizontalGroup:new{
             align = "center",
             nl_minus,
-            HorizontalSpan:new{ width = slider_gap },
+            HorizontalSpan:new{ width = warmth_gap },
             nl_progress,
-            HorizontalSpan:new{ width = slider_gap },
+            HorizontalSpan:new{ width = warmth_gap },
             nl_plus,
         }
 
@@ -767,20 +783,20 @@ local function createQuickSettingsPanel(touch_menu)
 
         -- ----- Location section -----
 
-    local location_gap = Screen:scaleBySize(4)
-    local location_btn_width = Math.round( inner_width / 3 ) - location_gap
-
     local location_group = VerticalGroup:new{ align = "center" }
-    if config.show_location then -- and filemanager then
+    if config.show_location then
+        -- variable
+        local location_gap = Screen:scaleBySize(4)
+        local location_btn_width = Math.round( inner_width / 3 ) - location_gap
 
         local location_label = TextWidget:new{
-            text = _("Location") .. ": ",
+            text = ("Location") .. ": ",
             face = medium_font,
             max_width = inner_width
         }
 
         local location_history = Button:new{
-            text = _("History"),
+            text = "\u{F1DA}" .. _("History"),
             width = location_btn_width,
             show_parent = touch_menu.show_parent,
             callback = function()
@@ -796,7 +812,7 @@ local function createQuickSettingsPanel(touch_menu)
         }
 
         local location_collections = Button:new{
-            text = _("Collections"),
+            text = "\u{F0C9}" .. _("Collections"),
             width = location_btn_width,
             show_parent = touch_menu.show_parent,
             callback = function()
@@ -812,7 +828,7 @@ local function createQuickSettingsPanel(touch_menu)
         }
 
         local location_favorites = Button:new{
-            text = _("Favorites"),
+            text = "\u{F005}" .. _("Favorites"),
             width = location_btn_width,
             show_parent = touch_menu.show_parent,
             callback = function()
@@ -837,36 +853,118 @@ local function createQuickSettingsPanel(touch_menu)
             location_favorites
         }
 
+        if ( config.show_search and filemanager ) or ( config.show_skim and reader ) then
+            location_label:setText(_("Other") .. ": ")
+        end
+
         table.insert(location_group, section_span)
         table.insert(location_group, location_label)
         table.insert(location_group, section_span)
         table.insert(location_group, location_row)
     end
 
-    -- ----- Skim section -----
+    -- ----- search section -----
 
-    local skim_gap = Screen:scaleBySize(4)
-    local skim_btn_width = Screen:scaleBySize(50)
-    local skim_gap2 = Math.round( ( inner_width - 7 * skim_btn_width - 4 * skim_gap ) / 2 )
-    local skim_slider_width = inner_width - 2 * skim_btn_width - 2 * skim_gap
-    local chapter_prev_text = "\u{2595}\u{25C1}\u{2002}" -- ▕◁ (right one eighth block, white left-pointing triangle, en space)
-    local chapter_next_text = "\u{2002}\u{25B7}\u{258F}" -- ▷▏ (en space, white right-pointing triangle, left one eighth block)
-    local bookmark_prev_text = "\u{F097}\u{25C1}" -- ◁ (private use area character, white left-pointing triangle)
-    local bookmark_next_text = "\u{25B7}\u{F097}" -- ▷ (white right-pointing triangle, private use area character)
-    local bookmark_enabled_text = "\u{F02E}"
-    local bookmark_disabled_text = "\u{F097}"
+    local search_group = VerticalGroup:new{ align = "center" }
+    if config.show_search and filemanager then
+        -- variable
+        local search_gap = Screen:scaleBySize(4)
+        local search_btn_width = Math.round( inner_width / 3 ) - search_gap
+
+        local search_label = TextWidget:new{
+            text = _("Search") .. ": ",
+            face = medium_font,
+            max_width = inner_width
+        }
+
+        local search_OPDS = Button:new{
+            text = "\u{F0C2}" .. _("OPDS"),
+            width = search_btn_width,
+            show_parent = touch_menu.show_parent,
+            callback = function()
+                touch_menu:closeMenu()
+                if hasPlugin("opds") then
+                    UIManager:broadcastEvent(Event:new("ShowOPDSCatalog"))
+                else
+                    UIManager:show(ConfirmBox:new{
+                        text = _("Is OPDS plugin activated ?"),
+                        ok_text = _("Exit"),
+                        ok_callback = function() end -- do nothing
+                    })
+                end
+            end
+        }
+
+        local search_file = Button:new{
+            text = "\u{F002}" .. _("Search"),
+            width = search_btn_width,
+            show_parent = touch_menu.show_parent,
+            callback = function()
+                touch_menu:closeMenu()
+                UIManager:broadcastEvent(Event:new("ShowFileSearch"))
+            end,
+            hold_callback = function()
+                touch_menu:closeMenu()
+                if hasPlugin("calibre") then
+                    UIManager:broadcastEvent(Event:new("CalibreSearch"))
+                else
+                    UIManager:broadcastEvent(Event:new("ShowFileSearch"))
+                end
+            end
+        }
+
+        local search_dictionary = Button:new{
+            text = "\u{F02D}" .. _("Dictionary"),
+            width = search_btn_width,
+            show_parent = touch_menu.show_parent,
+            callback = function()
+                touch_menu:closeMenu()
+                UIManager:broadcastEvent(Event:new("ShowDictionaryLookup"))
+            end
+        }
+
+        -- Inline row: [Hystory] [Collections] [Favorites]
+        local search_row = HorizontalGroup:new{
+            align = "center",
+            search_file,
+            HorizontalSpan:new{ width = search_gap },
+            search_dictionary,
+            HorizontalSpan:new{ width = search_gap },
+            search_OPDS
+        }
+
+        if not config.show_location then
+            table.insert(search_group, section_span)
+            table.insert(search_group, search_label)
+        end
+        table.insert(search_group, section_span)
+        table.insert(search_group, search_row)
+    end
+
+    -- ----- Skim section -----
 
     local skim_group = VerticalGroup:new{ align = "center" }
     if config.show_skim and reader then
+        -- variable
+        local skim_gap = Screen:scaleBySize(4)
+        local skim_btn_width = Screen:scaleBySize(50)
+        local skim_gap2 = Math.round( ( inner_width - 7 * skim_btn_width - 4 * skim_gap ) / 2 )
+        local skim_slider_width = inner_width - 2 * skim_btn_width - 2 * skim_gap
+        local chapter_prev_text = "\u{F0C9}\u{25C1}" -- ▕◁ (right one eighth block, white left-pointing triangle, en space)
+        local chapter_next_text = "\u{25B7}\u{F0C9}" -- ▷▏ (en space, white right-pointing triangle, left one eighth block)
+        local bookmark_prev_text = "\u{F097}\u{25C1}" -- ◁ (private use area character, white left-pointing triangle)
+        local bookmark_next_text = "\u{25B7}\u{F097}" -- ▷ (white right-pointing triangle, private use area character)
+        local bookmark_enabled_text = "\u{F02E}"
+        local bookmark_disabled_text = "\u{F097}"
 
         -- skim state
         local skim = {
             curr_page = reader:getCurrentPage(),
             page_count = reader.document:getPageCount()
         }
-        
+
         local skim_label = TextWidget:new{
-            text = _("Skim") .. ": " .. tostring(skim.curr_page),
+            text = _("Skim") .. ": ",
             face = medium_font,
             max_width = inner_width
         }
@@ -912,7 +1010,6 @@ local function createQuickSettingsPanel(touch_menu)
                 skim.curr_page = skim.page_count
             end
             skim_progress:setPercentage(skim.curr_page / skim.page_count)
-            skim_label:setText(_("Skim") .. ": " .. tostring(skim.curr_page))
             skim_current_page:setText(tostring(skim.curr_page), skim_current_page.width)
             skim_bookmark_toggle:setText(skim_bookmark_toggle:text_func(), skim_bookmark_toggle.width)
             UIManager:setDirty(touch_menu.show_parent, "ui")
@@ -1023,7 +1120,7 @@ local function createQuickSettingsPanel(touch_menu)
         }
 
         local skim_chapter_toggle = Button:new{
-            text = "chapter", -- ▕◁
+            text = "\u{F0C9}", --"\u{F01C}",
             width = skim_btn_width,
             show_parent = touch_menu.show_parent,
             callback = function()
@@ -1087,14 +1184,15 @@ local function createQuickSettingsPanel(touch_menu)
             skim_bookmark_next,
         }
 
-
         -- Store progress ref for tap/pan handling
         refs.skim_progress = skim_progress
         refs.skim_state = skim
         refs.goToPage = goToPage
 
-        table.insert(skim_group, section_span)
-        table.insert(skim_group, skim_label)
+        if not config.show_location then
+            table.insert(skim_group, section_span)
+            table.insert(skim_group, skim_label)
+        end
         table.insert(skim_group, section_span)
         table.insert(skim_group, skim_row)
         table.insert(skim_group, section_span)
@@ -1124,6 +1222,9 @@ local function createQuickSettingsPanel(touch_menu)
     end
     if #location_group > 0 then
         table.insert(panel, location_group)
+    end
+    if #search_group > 0 then
+        table.insert(panel, search_group)
     end
     if #skim_group > 0 then
         table.insert(panel, skim_group)
@@ -1213,29 +1314,34 @@ local orig_init = TouchMenu.init
                 end
             end
         end
-        -- Register a screen-wide hold gesture for panel button hold_callbacks
+        -- Register a screen-wide hold gesture for panel button hold_callback
+
+        -- screen_size may be nil on some devices (e.g. KindleBasic5)
+        local sw = (self.screen_size and self.screen_size.w) or Screen:getWidth()
+        local sh = (self.screen_size and self.screen_size.h) or Screen:getHeight()
+
         self.ges_events.HoldCloseAllMenus = {
             GestureRange:new{
                 ges = "hold",
-                range = Geom:new{ x = 0, y = 0, w = self.screen_size.w, h = self.screen_size.h },
+                range = Geom:new{ x = 0, y = 0, w = sw, h = sh },
             }
         }
         self.ges_events.PanCloseAllMenus = {
             GestureRange:new{
                 ges = "pan",
-                range = Geom:new{ x = 0, y = 0, w = self.screen_size.w, h = self.screen_size.h },
+                range = Geom:new{ x = 0, y = 0, w = sw, h = sh },
             }
         }
         self.ges_events.PanReleaseCloseAllMenus = {
             GestureRange:new{
                 ges = "pan_release",
-                range = Geom:new{ x = 0, y = 0, w = self.screen_size.w, h = self.screen_size.h },
+                range = Geom:new{ x = 0, y = 0, w = sw, h = sh },
             }
         }
         self.ges_events.MultiSwipe = {
             GestureRange:new{
                 ges = "multiswipe",
-                range = Geom:new{ x = 0, y = 0, w = self.screen_size.w, h = self.screen_size.h },
+                range = Geom:new{ x = 0, y = 0, w = sw, h = sh },
             }
         }
     end
@@ -1422,10 +1528,11 @@ local function buildSettingsMenu()
         sub_item_table = {
             {
                 text = _("Actions"),
-                sub_item_table = action_toggle_items
+                sub_item_table = action_toggle_items,
+                separator = true
             },
             {
-                text = _("Show actions buttons"),
+                text = _("Show actions controls"),
                 checked_func = function() return config.show_actions.visible end,
                 callback = function()
                     config.show_actions.visible = not config.show_actions.visible
@@ -1434,7 +1541,7 @@ local function buildSettingsMenu()
             },
 
             {
-                text = _("Show frontlight slider"),
+                text = _("Show frontlight controls"),
                 checked_func = function() return config.show_frontlight end,
                 callback = function()
                     config.show_frontlight = not config.show_frontlight
@@ -1442,7 +1549,7 @@ local function buildSettingsMenu()
                 end
             },
             {
-                text = _("Show warmth slider"),
+                text = _("Show warmth controls"),
                 checked_func = function() return config.show_warmth end,
                 callback = function()
                     config.show_warmth = not config.show_warmth
@@ -1450,7 +1557,7 @@ local function buildSettingsMenu()
                 end
             },
             {
-                text = _("Show locations buttons"),
+                text = _("Show location controls"),
                 checked_func = function() return config.show_location end,
                 callback = function()
                     config.show_location = not config.show_location
@@ -1458,7 +1565,15 @@ local function buildSettingsMenu()
                 end
             },
             {
-                text = _("Show skim slider"),
+                text = _("Show search controls"),
+                checked_func = function() return config.show_search end,
+                callback = function()
+                    config.show_search = not config.show_search
+                    saveConfig()
+                end
+            },
+            {
+                text = _("Show skim controls"),
                 checked_func = function() return config.show_skim end,
                 callback = function()
                     config.show_skim = not config.show_skim
