@@ -50,6 +50,7 @@ Increase the max size of the menu from 10 to 20 to use all the vertical space av
 <summary><h3>2-exit-button.lua</h3></summary>
 
 **In filemanager :** Add an exit button with the standard cross icon at the left size of the top menu. This exit button close the top menu.
+
 **In reader :** move the existing filemanager button to the left size of the top menu and change his icon with standard cross icon. This exit button close the reader and open the filemanager.
 
 </details>
