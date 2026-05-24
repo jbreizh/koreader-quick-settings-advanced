@@ -42,14 +42,15 @@ Adds a Quick Settings tab as the first tab in the KOReader top menu. Provides fa
 <details>
 <summary><h3>2-menu-size.lua</h3></summary>
 
-Increase.
+Increase the max size of the menu from 10 to 20 to use all the vertical space available.
 
 </details>
 
 <details>
 <summary><h3>2-exit-button.lua</h3></summary>
 
-Increase.
+**In filemanager :** Add an exit button with the standard cross icon at the left size of the top menu. This exit button close the top menu.
+**In reader :** move the existing filemanager button to the left size of the top menu and change his icon with standard cross icon. This exit button close the reader and open the filemanager.
 
 </details>
 
