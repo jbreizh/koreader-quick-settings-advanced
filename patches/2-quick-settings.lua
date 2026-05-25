@@ -655,8 +655,7 @@ local function createQuickSettingsPanel(touch_menu)
             HorizontalSpan:new{ width = frontlight_gap },
             fl_progress,
             HorizontalSpan:new{ width = frontlight_gap },
-            fl_plus,
-            HorizontalSpan:new{ width = frontlight_gap },
+            fl_plus
         }
 
         -- Store progress ref for tap/pan handling
