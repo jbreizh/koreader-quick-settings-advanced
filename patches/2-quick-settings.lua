@@ -298,7 +298,7 @@ local action_defs = {
         callback = function(touch_menu)
             UIManager:broadcastEvent(Event:new("ToggleNightMode"))
             touch_menu:updateItems(1)
-            UIManager:setDirty("all", "full")
+            UIManager:setDirty("all", "full") -- refresh screen
         end
     },
     light = {
@@ -554,23 +554,6 @@ local function createQuickSettingsPanel(touch_menu)
     local medium_font = Font:getFace("ffont")
     local section_span = VerticalSpan:new{ width = Screen:scaleBySize(8) }
 
-    local function update_frontlight_label_text()
-        local text = _("Frontlight") .. " :"
-        if Device:hasFrontlight() then
-            text = text .. " ✺ " .. tostring(powerd:frontlightIntensity())
-        end
-        if Device:hasNaturalLight() then
-            text = text .. " ⊛ " .. tostring(powerd:toNativeWarmth(powerd:frontlightWarmth()))
-        end
-        return text
-    end
-
-    local frontlight_label = TextWidget:new{
-        text = update_frontlight_label_text(),
-        face = medium_font,
-        max_width = inner_width
-    }
-
     local frontlight_group = VerticalGroup:new{ align = "center" }
     if config.show_frontlight and Device:hasFrontlight() then
         -- variable
@@ -620,19 +603,12 @@ local function createQuickSettingsPanel(touch_menu)
             last = fl.max
         }
 
-        local function updateBrightnessWidgets()
-            fl_progress:setPercentage(fl.cur / fl.max)
-            frontlight_label:setText(update_frontlight_label_text())
-            UIManager:setDirty(touch_menu.show_parent, "ui")
-        end
-
         local function setBrightness(intensity)
             if intensity ~= fl.min and intensity == fl.cur then return end
             intensity = math.max(fl.min, math.min(fl.max, intensity))
             powerd:setIntensity(intensity)
             fl.cur = powerd:frontlightIntensity()
-            updateBrightnessWidgets()
-            -- Crossed off→on; rebuild so the toggle button's active highlight refreshes.
+            fl_progress:setPercentage(fl.cur / fl.max)
             touch_menu:updateItems(1)
         end
 
@@ -663,7 +639,6 @@ local function createQuickSettingsPanel(touch_menu)
         refs.fl_state = fl
         refs.setBrightness = setBrightness
 
-        table.insert(frontlight_group, frontlight_label)
         table.insert(frontlight_group, section_span)
         table.insert(frontlight_group, fl_row)
     end
@@ -714,8 +689,7 @@ local function createQuickSettingsPanel(touch_menu)
                 new_native = math.min(new_native, warmth.max)
                 powerd:setWarmth(powerd:fromNativeWarmth(new_native))
                 warmth.cur = powerd:toNativeWarmth(powerd:frontlightWarmth())
-                frontlight_label:setText(update_frontlight_label_text())
-                UIManager:setDirty(touch_menu.show_parent, "ui")
+                touch_menu:updateItems(1)
             end,
             show_parent = touch_menu.show_parent,
             enabled = true
@@ -727,8 +701,7 @@ local function createQuickSettingsPanel(touch_menu)
             powerd:setWarmth(powerd:fromNativeWarmth(value))
             warmth.cur = powerd:toNativeWarmth(powerd:frontlightWarmth())
             warmth_progress:setPosition(math.floor(warmth.cur / warmth_stride), warmth_progress.default_position)
-            frontlight_label:setText(update_frontlight_label_text())
-            UIManager:setDirty(touch_menu.show_parent, "ui")
+            touch_menu:updateItems(1)
         end
 
         local warmth_minus = Button:new{
@@ -756,10 +729,6 @@ local function createQuickSettingsPanel(touch_menu)
             warmth_plus,
         }
 
-        if not config.show_frontlight then
-            table.insert(warmth_group, section_span)
-            table.insert(warmth_group, frontlight_label)
-        end
         table.insert(warmth_group, section_span)
         table.insert(warmth_group, warmth_row)
     end
@@ -771,12 +740,6 @@ local function createQuickSettingsPanel(touch_menu)
         -- variable
         local location_gap = Screen:scaleBySize(4)
         local location_btn_width = Math.round( inner_width / 3 ) - location_gap
-
-        local location_label = TextWidget:new{
-            text = ("Location") .. " : ",
-            face = medium_font,
-            max_width = inner_width
-        }
 
         local location_history = Button:new{
             text = "\u{F1DA} " .. _("History"),
@@ -833,12 +796,6 @@ local function createQuickSettingsPanel(touch_menu)
             location_favorites
         }
 
-        if ( config.show_search and filemanager ) or ( config.show_skim and reader ) then
-            location_label:setText(_("Other") .. " : ")
-        end
-
-        table.insert(location_group, section_span)
-        table.insert(location_group, location_label)
         table.insert(location_group, section_span)
         table.insert(location_group, location_row)
     end
@@ -850,12 +807,6 @@ local function createQuickSettingsPanel(touch_menu)
         -- variable
         local search_gap = Screen:scaleBySize(4)
         local search_btn_width = Math.round( inner_width / 3 ) - search_gap
-
-        local search_label = TextWidget:new{
-            text = _("Search") .. " : ",
-            face = medium_font,
-            max_width = inner_width
-        }
 
         local search_OPDS = Button:new{
             text = "\u{F0C2} " .. _("OPDS"),
@@ -913,10 +864,6 @@ local function createQuickSettingsPanel(touch_menu)
             search_OPDS
         }
 
-        if not config.show_location then
-            table.insert(search_group, section_span)
-            table.insert(search_group, search_label)
-        end
         table.insert(search_group, section_span)
         table.insert(search_group, search_row)
     end
@@ -944,12 +891,6 @@ local function createQuickSettingsPanel(touch_menu)
         local skim = {
             curr_page = reader:getCurrentPage(),
             page_count = reader.document:getPageCount()
-        }
-
-        local skim_label = TextWidget:new{
-            text = _("Skim") .. " : ",
-            face = medium_font,
-            max_width = inner_width
         }
 
         -- Create buttons first to measure height
@@ -1171,10 +1112,6 @@ local function createQuickSettingsPanel(touch_menu)
         refs.skim_state = skim
         refs.goToPage = goToPage
 
-        if not config.show_location then
-            table.insert(skim_group, section_span)
-            table.insert(skim_group, skim_label)
-        end
         table.insert(skim_group, section_span)
         table.insert(skim_group, skim_row)
         table.insert(skim_group, section_span)
@@ -1359,19 +1296,31 @@ function TouchMenu:updateItems(target_page, target_item_id)
     self.page_num = 1
     self.page = 1
 
-    -- Update time/battery in footer
-    local time_info_txt = datetime.secondsToHour(os.time(), G_reader_settings:isTrue("twelve_hour_clock"))
+    -- Update intensity/warmth/time/battery in footer
+    local time_info_txt = BD.wrap(datetime.secondsToHour(os.time(), G_reader_settings:isTrue("twelve_hour_clock")))
+
     local powerd = Device:getPowerDevice()
+    if Device:hasFrontlight() then
+        local intensity_lvl = powerd:frontlightIntensity()
+        time_info_txt = time_info_txt .. " " .. BD.wrap("✺") .. BD.wrap(intensity_lvl .. "%")
+        if Device:hasNaturalLight() then
+            local warmth_lvl = powerd:frontlightWarmth()
+            intensity_lvl = powerd:frontlightIntensity()
+            time_info_txt = time_info_txt .. " " .. BD.wrap("⊛") .. BD.wrap(warmth_lvl .. "%")
+        end
+    end
+
     if Device:hasBattery() then
         local batt_lvl = powerd:getCapacity()
         local batt_symbol = powerd:getBatterySymbol(powerd:isCharged(), powerd:isCharging(), batt_lvl)
-        time_info_txt = BD.wrap(time_info_txt) .. " " .. BD.wrap("⌁") .. BD.wrap(batt_symbol) .. BD.wrap(batt_lvl .. "%")
+        time_info_txt = time_info_txt .. " " .. BD.wrap("⌁") .. BD.wrap(batt_symbol) .. BD.wrap(batt_lvl .. "%")
         if Device:hasAuxBattery() and powerd:isAuxBatteryConnected() then
             local aux_batt_lvl = powerd:getAuxCapacity()
             local aux_batt_symbol = powerd:getBatterySymbol(powerd:isAuxCharged(), powerd:isAuxCharging(), aux_batt_lvl)
             time_info_txt = time_info_txt .. " " .. BD.wrap("+") .. BD.wrap(aux_batt_symbol) ..  BD.wrap(aux_batt_lvl .. "%")
         end
     end
+
     self.time_info:setText(time_info_txt)
 
     -- Recalculate dimen
