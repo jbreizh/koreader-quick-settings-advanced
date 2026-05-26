@@ -18,40 +18,53 @@ Drop the `patches/***.lua` files into your `koreader/patches/` directory. Place 
 
 # 2-quick-settings.lua
   
-Adds a Quick Settings tab as the first tab in the KOReader top menu. Provides fast access to common actions and device controls without navigating through menus. - Active buttons show a light gray fill indicator
-- Works in both File Manager and Reader views
+Adds a Quick Settings tab as the first tab in the KOReader top menu.
+Provides fast access to common actions and device controls without navigating through menus.
 
-**Actions :**
+**Actions :** In Filemanager and reader views
 
 ![photo](./assets/quicksettings_actions.png)
 
-Circular buttons that show a light gray fill indicator when active :
+Circular buttons with tap and hold action that show a light gray fill indicator when active :
 
-- Wi-Fi (shows connected SSID, active indicator when connected). Tap-> 
-- Night mode (active indicator when enabled)
-- Rotate screen (active indicator when lock)
-- USB mass storage
-- Calibre wireless connection (active indicator when connected, disabled by defaul)
-- Restart (with confirmation)
-- Exit (with confirmation)
-- Sleep/Suspend
+| Action | Label | Indicator | Tap | Hold | Default |  |
+|:--------|:-------:|:-------:|:-------:|:-------:|:-------:|:-------:|
+| Wifi | SSID | When connected | Toggle and connect wifi | Toggle and launch wifi picker | [x] | Core |
+| Night |  | When enabled | Toggle night mode |  | [x] | Core |
+| Light |  | When enabled | Toggle frontlight |  | [x] | Core |
+| Rotate |  | When lock | Rotate screen | Lock rotation | [x] | Core |
+| USB |  |  | Toggle mass storage |  | [x] | Core |
+| Restart |  |  | Restart Koreader (with confirmation) |  | [x] | Core |
+| Exit |  |  | Exit Koreader (with confirmation) |  | [ ] | Core |
+| Sleep |  |  | Suspend device |  | [ ] | Core |
+| SSH |  | When enabled | Toggle SSH server |  | [ ] | Core plugin |
+| Calibre |  | When enabled | Toggle Calibre wireless connection |  | [ ] | Core plugin |
 
-**Frontlight :**
+**Frontlight :** In Filemanager and reader views
 
 ![photo](./assets/quicksettings_frontlight.png)
 
-- Frontlight brightness: `[<] [slider] [>]`
-- Warmth (if device supports it): `[<] [segmented bar] [>]`
-
-**Locations :**
+**Locations :** In Filemanager and reader views
 
 ![photo](./assets/quicksettings_locations.png)
 
-**Search :**
+| Location | Tap | Hold |
+|:-------- |:--------:|:--------:|
+| History | Open history | Open last(fm)/previous(rd) document  |
+| Collections | Open collections |  |
+| Favorites | Open favorites |  |
+
+**Search :** In Filemanager view
 
 ![photo](./assets/quicksettings_search.png)
 
-**Skim :**
+| Search | Tap | Hold |
+|:-------- |:--------:|:--------:|
+| Search | Search file | Search Calibre metadata |
+| Dictionary | Search dictionary | Search wikipedia |
+| Cloud | Show cloud storage | Show OPDS catalog |
+
+**Skim :** In reader views
 
 ![photo](./assets/quicksettings_skim.png)
 
@@ -61,7 +74,6 @@ The Quick Settings patch can be configured from **Settings" (Gear icon) -> "Quic
 
 - **Select actions controls** :
 - **Arrange actions** : submenu: toggle individual buttons, drag to reorder
-- **Show actions controls** :
 - **Show actions controls labels** :
 - **Show frontlight controls** :
 - **Show warmth controls** :
