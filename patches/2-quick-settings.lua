@@ -35,23 +35,17 @@ local Screen = Device.screen
 local PATCH_L10N = {
     en = {
         -- Confirmations
-        ["Are you sure you want to restart KOReader?"] = "Are you sure you want to restart KOReader?",
-        ["Are you sure you want to exit KOReader?"] = "Are you sure you want to exit KOReader?",
-        ["Is OPDS plugin activated ?"] = "Is OPDS plugin activated ?",
-        ["Frontlight"] = "Frontlight",
-        ["Other"] = "Other",
+        ["Are you sure you want to restart KOReader ?"] = "Are you sure you want to restart KOReader ?",
+        ["Are you sure you want to exit KOReader ?"] = "Are you sure you want to exit KOReader ?",
+        ["OPDS plugin not activated."] = "OPDS plugin not activated.",
+        ["Calibre plugin not activated."] = "Calibre plugin not activated.",
         -- Actions
         ["Restart"] = "Restart",
         ["Exit"] = "Exit",
-        ["Wi-Fi"] = "Wi-Fi",
         ["Night"] = "Night",
         ["Light"] = "Light",
         ["Rotate"] = "Rotate",
-        ["USB"] = "USB",
-        ["SSH"] = "SSH",
         ["Sleep"] = "Sleep",
-        ["Cloud storage"] = "Cloud",
-        ["Calibre"] = "Calibre",
         -- Settings menu
         ["Quick settings"] = "Quick settings",
         ["Select actions controls"] = "Select actions controls",
@@ -67,23 +61,17 @@ local PATCH_L10N = {
     },
     fr = {
         -- Confirmations
-        ["Are you sure you want to restart KOReader?"] = "Êtes vous sur de vouloir redémarrer KOReader?",
-        ["Are you sure you want to exit KOReader?"] = "Êtes vous sur de vouloir quitter KOReader?",
-        ["Is OPDS plugin activated ?"] = "Le plugin OPDS est-il activé ?",
-        ["Frontlight"] = "Éclairage",
-        ["Other"] = "Autre",
+        ["Are you sure you want to restart KOReader ?"] = "Êtes vous sur de vouloir redémarrer KOReader ?",
+        ["Are you sure you want to exit KOReader ?"] = "Êtes vous sur de vouloir quitter KOReader ?",
+        ["OPDS plugin not activated."] = "Le plugin OPDS n'est pas activé.",
+        ["Calibre plugin not activated."] = "Le plugin Calibre n'est pas activé.",
         -- Actions
         ["Restart"] = "Redémarrer",
         ["Exit"] = "Quitter",
-        ["Wi-Fi"] = "Wi-Fi",
         ["Night"] = "Nuit",
         ["Light"] = "Éclairage",
         ["Rotate"] = "Tourner",
-        ["USB"] = "USB",
-        ["SSH"] = "SSH",
         ["Sleep"] = "Suspendre",
-        ["Cloud storage"] = "Nuage",
-        ["Calibre"] = "Calibre",
         -- Settings menu
         ["Quick settings"] = "Configuration rapide",
         ["Select actions controls"] = "Sélectionner les contrôles d'actions",
@@ -99,23 +87,17 @@ local PATCH_L10N = {
     },
     pt = {
         -- Confirmations
-        ["Are you sure you want to restart KOReader?"] = "Tem certeza que deseja reiniciar o KOReader?",
-        ["Are you sure you want to exit KOReader?"] = "Tem certeza que deseja sair do KOReader?",
-        ["Is OPDS plugin activated ?"] = "O plugin OPDS está ativado ?",
-        ["Frontlight"] = "Brilho",
-        ["Other"] = "Outro",
+        ["Are you sure you want to restart KOReader ?"] = "Tem certeza que deseja reiniciar o KOReader ?",
+        ["Are you sure you want to exit KOReader ?"] = "Tem certeza que deseja sair do KOReader ?",
+        ["OPDS plugin not activated."] = "Plugin OPDS não ativado.",
+        ["Calibre plugin not activated."] = "Plugin Calibre não ativado.",
         -- Actions
         ["Restart"] = "Reiniciar",
         ["Exit"] = "Sair",
-        ["Wi-Fi"] = "Wi-Fi",
         ["Night"] = "Noite",
         ["Light"] = "Luz",
         ["Rotate"] = "Girar",
-        ["USB"] = "USB",
-        ["SSH"] = "SSH",
         ["Sleep"] = "Suspender",
-        ["Cloud storage"] = "Nuvem",
-        ["Calibre"] = "Calibre",
         -- Settings menu
         ["Quick settings"] = "Configurações rápidas",
         ["Select actions controls"] = "Selecione controles de ações",
@@ -160,12 +142,11 @@ local config_default = {
         "rotate",
         "light",
         "usb",
-        "ssh",
-        "cloud",
-        "calibre",
         "restart",
         "exit",
-        "sleep"
+        "sleep",
+        "ssh",
+        "calibre"
     },
     show_actions = {
         wifi = true,
@@ -173,12 +154,11 @@ local config_default = {
         light = true,
         rotate = true,
         usb = true,
-        ssh = false,
-        cloud = false,
-        calibre = false,
         restart = true,
         exit = false,
-        sleep = false
+        sleep = false,
+        ssh = false,
+        calibre = false
     },
     show_action_visible = true,
     show_action_label = false,
@@ -332,31 +312,12 @@ local action_defs = {
             end
         end
     },
-    ssh = {
-        icon = "quick_ssh",
-        label = _("SSH"),
-        active_func = function()
-            local util = require("util")
-            return util.pathExists("/tmp/dropbear_koreader.pid")
-        end,
-        callback = function(touch_menu)
-            UIManager:broadcastEvent(Event:new("ToggleSSHServer"))
-            UIManager:scheduleIn(
-                2,
-                function()
-                    if touch_menu.item_table and touch_menu.item_table.panel then
-                        touch_menu:updateItems(1)
-                    end
-                end
-            )
-        end
-    },
     restart = {
         icon = "quick_restart",
         label = _("Restart"),
         callback = function()
             UIManager:show(ConfirmBox:new{
-                text = _("Are you sure you want to restart KOReader?"),
+                text = _("Are you sure you want to restart KOReader ?"),
                 ok_text = _("Restart"),
                 ok_callback = function()
                     UIManager:broadcastEvent(Event:new("Restart"))
@@ -369,7 +330,7 @@ local action_defs = {
         label = _("Exit"),
         callback = function()
             UIManager:show(ConfirmBox:new{
-                text = _("Are you sure you want to exit KOReader?"),
+                text = _("Are you sure you want to exit KOReader ?"),
                 ok_text = _("Exit"),
                 ok_callback = function()
                     UIManager:broadcastEvent(Event:new("Exit"))
@@ -388,11 +349,25 @@ local action_defs = {
             end
         end
     },
-    cloud = {
-        icon = "quick_cloud",
-        label = _("Cloud"),
-        callback = function()
-            UIManager:broadcastEvent(Event:new("ShowCloudStorage"))
+    -- core plugin
+    ssh = {
+        icon = "quick_ssh",
+        label = _("SSH"),
+        visible_func = function() return hasPlugin("SSH") end,
+        active_func = function()
+            local util = require("util")
+            return util.pathExists("/tmp/dropbear_koreader.pid")
+        end,
+        callback = function(touch_menu)
+            UIManager:broadcastEvent(Event:new("ToggleSSHServer"))
+            UIManager:scheduleIn(
+                2,
+                function()
+                    if touch_menu.item_table and touch_menu.item_table.panel then
+                        touch_menu:updateItems(1)
+                    end
+                end
+            )
         end
     },
     calibre = {
@@ -426,11 +401,10 @@ local function getActionDisplayNames()
         rotate = _("Rotate"),
         light = _("Light"),
         usb = _("USB"),
-        ssh = _("SSH"),
         restart = _("Restart"),
         exit = _("Exit"),
         sleep = _("Sleep"),
-        cloud = _("Cloud storage"),
+        ssh = _("SSH"),
         calibre = _("Calibre")
     }
 end
@@ -753,6 +727,15 @@ local function createQuickSettingsPanel(touch_menu)
                 if reader and reader.history then
                     reader.history:onShowHist()
                 end
+            end,
+            hold_callback = function()
+                touch_menu:closeMenu()
+                if filemanager and filemanager.menu then
+                    filemanager.menu:onOpenLastDoc()
+                end
+                if reader  then
+                    reader:onOpenLastDoc()
+                end
             end
         }
 
@@ -768,6 +751,9 @@ local function createQuickSettingsPanel(touch_menu)
                 if reader and reader.collections then
                     reader.collections:onShowCollList()
                 end
+            end,
+            hold_callback = function()
+                touch_menu:closeMenu()
             end
         }
 
@@ -783,6 +769,9 @@ local function createQuickSettingsPanel(touch_menu)
                 if reader and reader.collections then
                     reader.collections:onShowColl()
                 end
+            end,
+            hold_callback = function()
+                touch_menu:closeMenu()
             end
         }
 
@@ -808,17 +797,21 @@ local function createQuickSettingsPanel(touch_menu)
         local search_gap = Screen:scaleBySize(4)
         local search_btn_width = Math.round( inner_width / 3 ) - search_gap
 
-        local search_OPDS = Button:new{
-            text = "\u{F0C2} " .. _("OPDS"),
+        local search_cloud = Button:new{
+            text = "\u{F0C2} " .. _("Cloud"),
             width = search_btn_width,
             show_parent = touch_menu.show_parent,
             callback = function()
+                touch_menu:closeMenu()
+                UIManager:broadcastEvent(Event:new("ShowCloudStorage"))
+            end,
+            hold_callback = function()
                 touch_menu:closeMenu()
                 if hasPlugin("opds") then
                     UIManager:broadcastEvent(Event:new("ShowOPDSCatalog"))
                 else
                     UIManager:show(ConfirmBox:new{
-                        text = _("Is OPDS plugin activated ?"),
+                        text = _("OPDS plugin not activated."),
                         ok_text = _("Exit"),
                         ok_callback = function() end -- do nothing
                     })
@@ -839,7 +832,11 @@ local function createQuickSettingsPanel(touch_menu)
                 if hasPlugin("calibre") then
                     UIManager:broadcastEvent(Event:new("CalibreSearch"))
                 else
-                    UIManager:broadcastEvent(Event:new("ShowFileSearch"))
+                    UIManager:show(ConfirmBox:new{
+                        text = _("Calibre plugin not activated."),
+                        ok_text = _("Exit"),
+                        ok_callback = function() end -- do nothing
+                    })
                 end
             end
         }
@@ -851,7 +848,11 @@ local function createQuickSettingsPanel(touch_menu)
             callback = function()
                 touch_menu:closeMenu()
                 UIManager:broadcastEvent(Event:new("ShowDictionaryLookup"))
-            end
+            end,
+            hold_callback = function()
+                touch_menu:closeMenu()
+                UIManager:broadcastEvent(Event:new("ShowWikipediaLookup"))
+            end,
         }
 
         -- Inline row: [Hystory] [Collections] [Favorites]
@@ -861,7 +862,7 @@ local function createQuickSettingsPanel(touch_menu)
             HorizontalSpan:new{ width = search_gap },
             search_dictionary,
             HorizontalSpan:new{ width = search_gap },
-            search_OPDS
+            search_cloud
         }
 
         table.insert(search_group, section_span)
