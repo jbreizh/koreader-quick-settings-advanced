@@ -1,16 +1,10 @@
 # koreader-quick-settings-advanced
 
+![photo](./assets/global_fm_rd.jpg)
+
 Advanced version of quick-settings patch from qewer33. Mix of personnal and others forks ideas.
 
 The idea is to remain simple and not change everything like zenui or simpleui. It keep Koreader native, but add useful shortcut.
-
-**In filemanager :**
-
-![photo](./assets/global_fm.jpg)
-
-**In reader :**
-
-![photo](./assets/global_rd.jpg)
 
 ## Installation
 
@@ -25,7 +19,7 @@ Place all the icons in the `icons/` folder in your KOReader `icons/` directory.
 Adds a Quick Settings tab as the first tab in the KOReader top menu.
 Provides a fast access to common actions and device controls without navigating through menus.
 
-**Actions :** In Filemanager and reader views
+**Actions :** Both in Filemanager and reader views
 
 ![photo](./assets/quicksettings_actions.jpg)
 
