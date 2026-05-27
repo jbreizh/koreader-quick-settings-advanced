@@ -1298,18 +1298,20 @@ function TouchMenu:updateItems(target_page, target_item_id)
     self.page = 1
 
     -- Update intensity/warmth/time/battery in footer
-    local time_info_txt = BD.wrap(datetime.secondsToHour(os.time(), G_reader_settings:isTrue("twelve_hour_clock")))
-
+    local time_info_txt = ""
     local powerd = Device:getPowerDevice()
+
     if Device:hasFrontlight() then
         local intensity_lvl = powerd:frontlightIntensity()
-        time_info_txt = time_info_txt .. " " .. BD.wrap("✺") .. BD.wrap(intensity_lvl .. "%")
+        time_info_txt = BD.wrap("✺") .. BD.wrap(intensity_lvl .. "%")
         if Device:hasNaturalLight() then
             local warmth_lvl = powerd:frontlightWarmth()
             intensity_lvl = powerd:frontlightIntensity()
             time_info_txt = time_info_txt .. " " .. BD.wrap("⊛") .. BD.wrap(warmth_lvl .. "%")
         end
     end
+
+    time_info_txt = time_info_txt .. " " .. BD.wrap(datetime.secondsToHour(os.time(), G_reader_settings:isTrue("twelve_hour_clock")))
 
     if Device:hasBattery() then
         local batt_lvl = powerd:getCapacity()
@@ -1374,8 +1376,7 @@ function TouchMenu:switchMenuTab(tab_num)
     end
 end
 
--- Safety guards: onPrevPage / onNextPage crash when self.page is nil in
--- panel mode (no pagination).  Consume silently.
+-- Safety guards: onPrevPage / onNextPage crash when self.page is nil in panel mode (no pagination).  Consume silently.
 local orig_onPrevPage = TouchMenu.onPrevPage
 if orig_onPrevPage then
     function TouchMenu:onPrevPage()
