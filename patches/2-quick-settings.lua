@@ -35,22 +35,40 @@ local Screen = Device.screen
 
 local GestureRange = require("ui/gesturerange")
 
-local CoverButton = InputContainer:extend{}
+local CoverButton = InputContainer:extend{
+    callback = nil,
+    hold_callback = nil,
+    bordersize = 1,
+    padding = 1,
+    radius = nil,
+}
 
 function CoverButton:init()
-    self.image_widget = IconWidget:new{
+    local image_widget = IconWidget:new{
         image = self.image,
         width = self.width,
         height = self.height,
     }
 
-    self[1] = self.image_widget
-    self.dimen = self.image_widget:getSize()
+    self[1] = FrameContainer:new{
+        bordersize = self.bordersize,
+        padding = self.padding,
+        radius = self.radius,
+        image_widget,
+    }
+
+    self.dimen = self[1]:getSize()
 
     self.ges_events = {
         TapCover = {
             GestureRange:new{
                 ges = "tap",
+                range = self.dimen,
+            },
+        },
+        HoldCover = {
+            GestureRange:new{
+                ges = "hold",
                 range = self.dimen,
             },
         },
@@ -60,6 +78,13 @@ end
 function CoverButton:onTapCover()
     if self.callback then
         self.callback()
+    end
+    return true
+end
+
+function CoverButton:onHoldCover()
+    if self.hold_callback then
+        self.hold_callback()
     end
     return true
 end
@@ -74,8 +99,7 @@ local PATCH_L10N = {
         -- Confirmations
         ["Are you sure you want to restart KOReader ?"] = "Are you sure you want to restart KOReader ?",
         ["Are you sure you want to exit KOReader ?"] = "Are you sure you want to exit KOReader ?",
-        ["OPDS plugin not activated."] = "OPDS plugin not activated.",
-        ["Calibre plugin not activated."] = "Calibre plugin not activated.",
+        ["Plugin not activated."] = "Plugin not activated.",
         ["Unknown author"] = "Unknown author",
         ["Unknown title"] = "Unknown title",
         -- Actions
@@ -103,8 +127,7 @@ local PATCH_L10N = {
         -- Confirmations
         ["Are you sure you want to restart KOReader ?"] = "Êtes vous sur de vouloir redémarrer KOReader ?",
         ["Are you sure you want to exit KOReader ?"] = "Êtes vous sur de vouloir quitter KOReader ?",
-        ["OPDS plugin not activated."] = "Le plugin OPDS n'est pas activé.",
-        ["Calibre plugin not activated."] = "Le plugin Calibre n'est pas activé.",
+        ["Plugin not activated."] = "Plugin non activé.",
         ["Unknown author"] = "Auteur inconnu",
         ["Unknown title"] = "Titre inconnu",
         -- Actions
@@ -132,8 +155,7 @@ local PATCH_L10N = {
         -- Confirmations
         ["Are you sure you want to restart KOReader ?"] = "Tem certeza que deseja reiniciar o KOReader ?",
         ["Are you sure you want to exit KOReader ?"] = "Tem certeza que deseja sair do KOReader ?",
-        ["OPDS plugin not activated."] = "Plugin OPDS não ativado.",
-        ["Calibre plugin not activated."] = "Plugin Calibre não ativado.",
+        ["Plugin not activated."] = "Plugin não ativado.",
         ["Unknown author"] = "Autor desconhecido",
         ["Unknown title"] = "Título desconhecido",
         -- Actions
@@ -493,8 +515,6 @@ local function createQuickSettingsPanel(touch_menu)
     local icon_size = math.floor(action_btn_size * 0.5)
 
     -- Active styling
-    local normal_border = Screen:scaleBySize(2)
-
     local function makeActionButton(icon_name, label_text, isactive, islabel)
         local icon = IconWidget:new{
             icon = icon_name,
@@ -506,13 +526,13 @@ local function createQuickSettingsPanel(touch_menu)
             width = action_btn_size,
             height = action_btn_size,
             radius = math.floor(action_btn_size / 2),
-            bordersize = normal_border,
+            bordersize = Size.border.button,
             background = isactive and Blitbuffer.COLOR_LIGHT_GRAY or Blitbuffer.COLOR_WHITE,
             padding = 0,
             CenterContainer:new{
                 dimen = Geom:new{
-                    w = action_btn_size - normal_border * 2,
-                    h = action_btn_size - normal_border * 2
+                    w = action_btn_size - Size.border.button * 2,
+                    h = action_btn_size - Size.border.button * 2
                 },
                 icon
             }
@@ -575,7 +595,7 @@ local function createQuickSettingsPanel(touch_menu)
 
     --
 
-    local section_span = VerticalSpan:new{ width = Screen:scaleBySize(8) }
+    local section_span = VerticalSpan:new{ width = Screen:scaleBySize(4) }
 
    -- ----- Frontlight section -----
 
@@ -589,8 +609,8 @@ local function createQuickSettingsPanel(touch_menu)
 
         -- Special character
         local frontlight_text = "✺"
-        local frontlight_prev_text = "\u{25C1}"
-        local frontlight_next_text = "\u{25B7}"
+        local frontlight_prev_text = "\u{25C0}"
+        local frontlight_next_text = "\u{25B6}"
 
         -- Frontlight state
         local fl = {
@@ -616,6 +636,7 @@ local function createQuickSettingsPanel(touch_menu)
         local fl_minus = Button:new{
             text = frontlight_text .. frontlight_prev_text,
             width = frontlight_btn_width,
+            radius = Size.radius.button,
             text_font_size = frontlight_text_size,
             show_parent = touch_menu.show_parent,
             callback = function() end, -- placeholder, set below
@@ -649,6 +670,7 @@ local function createQuickSettingsPanel(touch_menu)
         local fl_plus = Button:new{
             text = frontlight_next_text .. frontlight_text,
             width = frontlight_btn_width,
+            radius = Size.radius.button,
             text_font_size = frontlight_text_size,
             show_parent = touch_menu.show_parent,
             callback = function() setBrightness(fl.cur + 1) end,
@@ -686,8 +708,8 @@ local function createQuickSettingsPanel(touch_menu)
 
         -- Special character
         local warmth_text = "⊛"
-        local warmth_minus_text = "⊛\u{25C1}" -- ⊛◁   💡
-        local warmth_plus_text = "\u{25B7}⊛" -- ▷⊛    💡
+        local warmth_minus_text = "\u{25C0}" -- ⊛◁   💡
+        local warmth_plus_text = "\u{25B6}" -- ▷⊛    💡
 
         -- Warmth state
         local warmth = {
@@ -707,8 +729,9 @@ local function createQuickSettingsPanel(touch_menu)
 
         -- Create buttons first to measure height
         local warmth_minus = Button:new{
-            text = warmth_minus_text,
+            text = warmth_text .. warmth_minus_text,
             width = warmth_btn_width,
+            radius = Size.radius.button,
             text_font_size = warmth_text_size,
             show_parent = touch_menu.show_parent,
             callback = function() end, -- placeholder, set below
@@ -722,7 +745,7 @@ local function createQuickSettingsPanel(touch_menu)
             height = warmth_btn_height,
             font_size = warmth_text_size,
             padding = 0,
-            thin_grey_style = false,
+            thin_grey_style = true,
             num_buttons = warmth_num_buttons - 1,
             position = math.floor(warmth.cur / warmth_stride),
             default_position = math.floor(warmth.cur / warmth_stride),
@@ -751,8 +774,9 @@ local function createQuickSettingsPanel(touch_menu)
         warmth_minus.hold_callback = function() setWarmth(warmth.min) end
 
         local warmth_plus = Button:new{
-            text = warmth_plus_text,
+            text = warmth_plus_text .. warmth_text,
             width = warmth_btn_width,
+            radius = Size.radius.button,
             text_font_size = warmth_text_size,
             show_parent = touch_menu.show_parent,
             callback = function() setWarmth(warmth.cur + 1) end,
@@ -790,10 +814,11 @@ local function createQuickSettingsPanel(touch_menu)
         local location_history = Button:new{
             text = location_history_text .. " " .. _("History"),
             width = location_btn_width,
+            radius = Size.radius.button,
             text_font_size = location_text_size,
             show_parent = touch_menu.show_parent,
             callback = function()
-                touch_menu:closeMenu()
+                -- touch_menu:closeMenu()
                 if filemanager and filemanager.history then
                     filemanager.history:onShowHist()
                 end
@@ -802,7 +827,7 @@ local function createQuickSettingsPanel(touch_menu)
                 end
             end,
             hold_callback = function()
-                touch_menu:closeMenu()
+                -- touch_menu:closeMenu()
                 if filemanager and filemanager.menu then
                     filemanager.menu:onOpenLastDoc()
                 end
@@ -815,10 +840,11 @@ local function createQuickSettingsPanel(touch_menu)
         local location_collections = Button:new{
             text = location_collections_text .. " " .. _("Collections"),
             width = location_btn_width,
+            radius = Size.radius.button,
             text_font_size = location_text_size,
             show_parent = touch_menu.show_parent,
             callback = function()
-                touch_menu:closeMenu()
+                -- touch_menu:closeMenu()
                 if filemanager and filemanager.collections then
                     filemanager.collections:onShowCollList()
                 end
@@ -827,17 +853,18 @@ local function createQuickSettingsPanel(touch_menu)
                 end
             end,
             hold_callback = function()
-                touch_menu:closeMenu()
+                -- touch_menu:closeMenu()
             end
         }
 
         local location_favorites = Button:new{
             text = location_favorites_text .. " " .. _("Favorites"),
             width = location_btn_width,
+            radius = Size.radius.button,
             text_font_size = location_text_size,
             show_parent = touch_menu.show_parent,
             callback = function()
-                touch_menu:closeMenu()
+                -- touch_menu:closeMenu()
                 if filemanager and filemanager.collections then
                     filemanager.collections:onShowColl()
                 end
@@ -846,7 +873,7 @@ local function createQuickSettingsPanel(touch_menu)
                 end
             end,
             hold_callback = function()
-                touch_menu:closeMenu()
+                -- touch_menu:closeMenu()
             end
         }
 
@@ -882,19 +909,20 @@ local function createQuickSettingsPanel(touch_menu)
         local search_cloud = Button:new{
             text = search_cloud_text .. " " .. _("Cloud"),
             width = search_btn_width,
+            radius = Size.radius.button,
             text_font_size = search_text_size,
             show_parent = touch_menu.show_parent,
             callback = function()
-                touch_menu:closeMenu()
+                -- touch_menu:closeMenu()
                 UIManager:broadcastEvent(Event:new("ShowCloudStorage"))
             end,
             hold_callback = function()
-                touch_menu:closeMenu()
+                -- touch_menu:closeMenu()
                 if hasPlugin("opds") then
                     UIManager:broadcastEvent(Event:new("ShowOPDSCatalog"))
                 else
                     UIManager:show(ConfirmBox:new{
-                        text = _("OPDS plugin not activated."),
+                        text = "OPDS : " .. _("Plugin not activated."),
                         ok_text = _("Exit"),
                         ok_callback = function() end -- do nothing
                     })
@@ -905,19 +933,20 @@ local function createQuickSettingsPanel(touch_menu)
         local search_file = Button:new{
             text = search_file_text .. " " .. _("Search"),
             width = search_btn_width,
+            radius = Size.radius.button,
             text_font_size = search_text_size,
             show_parent = touch_menu.show_parent,
             callback = function()
-                touch_menu:closeMenu()
+                -- touch_menu:closeMenu()
                 UIManager:broadcastEvent(Event:new("ShowFileSearch"))
             end,
             hold_callback = function()
-                touch_menu:closeMenu()
+                -- touch_menu:closeMenu()
                 if hasPlugin("calibre") then
                     UIManager:broadcastEvent(Event:new("CalibreSearch"))
                 else
                     UIManager:show(ConfirmBox:new{
-                        text = _("Calibre plugin not activated."),
+                        text = "Calibre : " .. _("Plugin not activated."),
                         ok_text = _("Exit"),
                         ok_callback = function() end -- do nothing
                     })
@@ -928,14 +957,15 @@ local function createQuickSettingsPanel(touch_menu)
         local search_dictionary = Button:new{
             text = search_dictionary_text .. " " .. _("Dictionary"),
             width = search_btn_width,
+            radius = Size.radius.button,
             text_font_size = search_text_size,
             show_parent = touch_menu.show_parent,
             callback = function()
-                touch_menu:closeMenu()
+                -- touch_menu:closeMenu()
                 UIManager:broadcastEvent(Event:new("ShowDictionaryLookup"))
             end,
             hold_callback = function()
-                touch_menu:closeMenu()
+                -- touch_menu:closeMenu()
                 UIManager:broadcastEvent(Event:new("ShowWikipediaLookup"))
             end,
         }
@@ -968,6 +998,7 @@ local function createQuickSettingsPanel(touch_menu)
         local info_chapter_text = "\u{F0C9}"
         local info_authors_text = "\u{F040}"
         local info_description_text = "\u{F075}"
+        local info_statistique_text = "\u{F201}"
         local info_cover_text = "\u{F1C5}"
 
         -- info state
@@ -1001,13 +1032,39 @@ local function createQuickSettingsPanel(touch_menu)
         local info_description = Button:new{
             text = info_description_text,
             width = info_btn_width,
+            radius = Size.radius.button,
             text_font_size = info_text_size,
             show_parent = touch_menu.show_parent,
             callback = function()
-                touch_menu:closeMenu()
+                -- touch_menu:closeMenu()
                 reader.bookinfo:onShowBookDescription(false, reader.document.file)
             end,
-            hold_callback = function() end -- placeholder, set below
+            hold_callback = function()
+                -- touch_menu:closeMenu()
+            end
+        }
+
+        local info_statistique = Button:new{
+            text = info_statistique_text,
+            width = info_btn_width,
+            radius = Size.radius.button,
+            text_font_size = info_text_size,
+            show_parent = touch_menu.show_parent,
+            callback = function()
+                -- touch_menu:closeMenu()
+                if hasPlugin("statistics") then
+                    UIManager:broadcastEvent(Event:new("ShowBookStats"))
+                else
+                    UIManager:show(ConfirmBox:new{
+                        text = "Statistics : " .. _("Plugin not activated."),
+                        ok_text = _("Exit"),
+                        ok_callback = function() end -- do nothing
+                    })
+                end
+            end,
+            hold_callback = function()
+                -- touch_menu:closeMenu()
+            end
         }
 
         --
@@ -1019,7 +1076,11 @@ local function createQuickSettingsPanel(touch_menu)
         }
         local info_column1 = VerticalGroup:new{
             align = "center",
-            info_description
+            info_description,
+            section_span,
+            info_statistique,
+            section_span,
+            VerticalSpan:new{ width = info_description:getSize().h }
         }
 
         -- Inline row: [Authors] [Title]
@@ -1035,7 +1096,7 @@ local function createQuickSettingsPanel(touch_menu)
 
         if thumbnail then
             -- calculate thumbnail height to fit text
-            local max_h = info_description:getSize().h * 3
+            local max_h = info_description:getSize().h * 3 + section_span:getSize().h * 2
 
             -- resize thumbnail
             local w, h = thumbnail:getWidth(), thumbnail:getHeight()
@@ -1050,10 +1111,16 @@ local function createQuickSettingsPanel(touch_menu)
                 image = thumbnail,
                 width = w,
                 height = h,
+                bordersize = Size.border.button,
+                padding = 0,
+                radius = Size.radius.button,
                 callback = function()
-                    touch_menu:closeMenu()
+                    -- touch_menu:closeMenu()
                     reader.bookinfo:onShowBookCover(reader.document.file)
                 end,
+                hold_callback = function()
+                    -- touch_menu:closeMenu()
+                end
             }
 
             -- recalculate width to fit info_thumbnail
@@ -1063,8 +1130,6 @@ local function createQuickSettingsPanel(touch_menu)
                 widget.width = info_txt_width
                 widget:init()
             end
-
-
 
             -- insert info_thumbnail
             table.insert(info_row, 1, HorizontalSpan:new{ width = info_gap })
@@ -1091,8 +1156,8 @@ local function createQuickSettingsPanel(touch_menu)
         -- Special character
         local skim_page_text = "\u{F0F6}"
         local skim_chapter_text = "\u{F0C9}"
-        local skim_prev_text = "\u{25C1}"
-        local skim_next_text = "\u{25B7}"
+        local skim_prev_text = "\u{25C0}" --25C1
+        local skim_next_text = "\u{25B6}" --25B7
         local skim_bookmark_enabled_text = "\u{F02E}"
         local skim_bookmark_disabled_text = "\u{F097}"
 
@@ -1105,6 +1170,7 @@ local function createQuickSettingsPanel(touch_menu)
          local skim_current_page = Button:new{
             text = tostring(skim.curr_page),
             width = skim_btn_width,
+            radius = Size.radius.button,
             text_font_size = skim_text_size,
             show_parent = touch_menu.show_parent,
             callback = function() end, -- placeholder, set below
@@ -1116,6 +1182,7 @@ local function createQuickSettingsPanel(touch_menu)
                 return reader.view.dogear_visible and skim_bookmark_enabled_text or skim_bookmark_disabled_text
             end,
             width = skim_btn_width,
+            radius = Size.radius.button,
             text_font_size = skim_text_size,
             show_parent = touch_menu.show_parent,
             callback = function() end, -- placeholder, set below
@@ -1201,6 +1268,7 @@ local function createQuickSettingsPanel(touch_menu)
         local skim_bookmark_next = Button:new{
             text = skim_next_text .. skim_bookmark_disabled_text,
             width = skim_btn_width,
+            radius = Size.radius.button,
             text_font_size = skim_text_size,
             show_parent = touch_menu.show_parent,
             callback = function()
@@ -1214,6 +1282,7 @@ local function createQuickSettingsPanel(touch_menu)
         local skim_bookmark_prev = Button:new{
             text = skim_bookmark_disabled_text .. skim_prev_text,
             width = skim_btn_width,
+            radius = Size.radius.button,
             text_font_size = skim_text_size,
             show_parent = touch_menu.show_parent,
             callback = function()
@@ -1227,6 +1296,7 @@ local function createQuickSettingsPanel(touch_menu)
         local skim_chapter_next = Button:new{
             text = skim_next_text .. skim_chapter_text,
             width = skim_btn_width,
+            radius = Size.radius.button,
             text_font_size = skim_text_size,
             show_parent = touch_menu.show_parent,
             callback = function()
@@ -1243,6 +1313,7 @@ local function createQuickSettingsPanel(touch_menu)
         local skim_chapter_prev = Button:new{
             text = skim_chapter_text .. skim_prev_text,
             width = skim_btn_width,
+            radius = Size.radius.button,
             text_font_size = skim_text_size,
             show_parent = touch_menu.show_parent,
             callback = function()
@@ -1259,6 +1330,7 @@ local function createQuickSettingsPanel(touch_menu)
         local skim_chapter_toggle = Button:new{
             text = skim_chapter_text,
             width = skim_btn_width,
+            radius = Size.radius.button,
             text_font_size = skim_text_size,
             show_parent = touch_menu.show_parent,
             callback = function()
@@ -1274,6 +1346,7 @@ local function createQuickSettingsPanel(touch_menu)
         local skim_page_next = Button:new{
             text = skim_next_text .. skim_page_text,
             width = skim_btn_width,
+            radius = Size.radius.button,
             text_font_size = skim_text_size,
             show_parent = touch_menu.show_parent,
             callback = function()
@@ -1287,6 +1360,7 @@ local function createQuickSettingsPanel(touch_menu)
         local skim_page_prev = Button:new{
             text = skim_page_text .. skim_prev_text,
             width = skim_btn_width,
+            radius = Size.radius.button,
             text_font_size = skim_text_size,
             show_parent = touch_menu.show_parent,
             callback = function()
