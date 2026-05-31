@@ -28,7 +28,8 @@ Provides a fast access to common actions and device controls without navigating 
 | Wifi | SSID | When connected | Toggle and connect wifi | Toggle and launch wifi picker | [x] | Core |
 | Night |  | When enabled | Toggle night mode |  | [x] | Core |
 | Light |  | When enabled | Toggle frontlight |  | [x] | Core |
-| Rotate |  | When lock | Rotate screen | Lock rotation | [x] | Core |
+| Rotate |  | | Rotate screen 90° | Invert screen 180° | [x] | Core |
+| Lock |  | When partial/complet lock | Toggle partial lock | Toggle complet lock | [x] | Core |
 | USB |  |  | Toggle mass storage |  | [x] | Core |
 | Restart |  |  | Restart Koreader (with confirmation) |  | [x] | Core |
 | Exit |  |  | Exit Koreader (with confirmation) |  | [ ] | Core |
@@ -67,6 +68,9 @@ Provides a fast access to common actions and device controls without navigating 
 | Dictionary | Show "dictionary search" | Show "Wikipedia search" |
 | Cloud | Show "cloud storage" | Show "OPDS catalog" |
 
+**Info :**
+
+
 **Skim :** Only in reader views
 
 ![photo](./assets/quicksettings_skim.jpg)
@@ -78,7 +82,7 @@ Provides a fast access to common actions and device controls without navigating 
 | Chapter - | Decrease chapter by 1 | Set chapter to first |
 | Chapter toogle | Show "table of contents" | Show "book map" |
 | Chapter + | Increase chapter by 1 | Set chapter to last |
-| Page indicator | Show "goto dialog" | Goto to original page |
+| Page indicator | Show "goto page dialog" | Go to original page |
 | Bookmark - | Decrease bookmark by 1 | Set bookmark to first |
 | Bookmark toogle | Toogle bookmark | Show "bookmark" |
 | Bookmark + | Increase bookmark by 1 | Set bookmark to last |
@@ -97,7 +101,7 @@ The Quick Settings patch can be configured from **Settings" (Gear icon) -> "Quic
 
 Add an exit button with the standard cross icon at the left size of the top menu.
 
-This exit button close the top menu.
+This exit button close the top menu on tap.
 
 **In reader :**
 
@@ -105,7 +109,7 @@ This exit button close the top menu.
 
 Move the existing filemanager button to the left size of the top menu and change his icon with standard cross icon.
 
-This exit button close the reader and open the filemanager.
+This exit button close close the top menu on tap and open filemanager on hold.
 
 ### 2-menu-size.lua
 
