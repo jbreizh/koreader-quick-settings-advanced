@@ -108,6 +108,7 @@ local PATCH_L10N = {
         ["Night"] = "Night",
         ["Light"] = "Light",
         ["Rotate"] = "Rotate",
+        ["Lock"] = "Lock",
         ["Sleep"] = "Sleep",
         -- Settings menu
         ["Quick settings"] = "Quick settings",
@@ -136,6 +137,7 @@ local PATCH_L10N = {
         ["Night"] = "Nuit",
         ["Light"] = "Éclairage",
         ["Rotate"] = "Tourner",
+        ["Lock"] = "Bloquer",
         ["Sleep"] = "Suspendre",
         -- Settings menu
         ["Quick settings"] = "Configuration rapide",
@@ -164,6 +166,7 @@ local PATCH_L10N = {
         ["Night"] = "Noite",
         ["Light"] = "Luz",
         ["Rotate"] = "Girar",
+        ["Lock"] = "Bloqueio",
         ["Sleep"] = "Suspender",
         -- Settings menu
         ["Quick settings"] = "Configurações rápidas",
@@ -208,6 +211,7 @@ local config_default = {
         "wifi",
         "night",
         "rotate",
+        "lock",
         "light",
         "usb",
         "restart",
@@ -221,6 +225,7 @@ local config_default = {
         night = true,
         light = true,
         rotate = true,
+        lock = true,
         usb = true,
         restart = true,
         exit = false,
@@ -363,17 +368,39 @@ local action_defs = {
     rotate = {
         icon = "quick_rotate",
         label = _("Rotate"),
-        active_func = function() return G_reader_settings:isTrue("input_lock_gsensor") end,
         callback = function()
             UIManager:broadcastEvent(Event:new("SwapRotation"))
         end,
         hold_callback = function(touch_menu)
-            if Device:hasGSensor() then
-                UIManager:broadcastEvent(Event:new("LockGSensor"))
-                touch_menu:updateItems(1)
+            UIManager:broadcastEvent(Event:new("InvertRotation"))
+        end
+    },
+    lock = {
+        icon = "quick_lock",
+        label = _("Lock"),
+        visible_func = function() return Device:hasGSensor() end,
+        active_func = function() return G_reader_settings:isTrue("input_lock_gsensor") or G_reader_settings:isTrue("input_ignore_gsensor") end,
+        callback = function(touch_menu)
+            if G_reader_settings:isTrue("input_ignore_gsensor") then
+                UIManager:broadcastEvent(Event:new("ToggleGSensor"))
+                if G_reader_settings:isTrue("input_lock_gsensor") then
+                    UIManager:broadcastEvent(Event:new("LockGSensor"))
+                end
             else
-                UIManager:broadcastEvent(Event:new("InvertRotation"))
+                UIManager:broadcastEvent(Event:new("LockGSensor"))
             end
+            touch_menu:updateItems(1)
+        end,
+        hold_callback = function(touch_menu)
+            if G_reader_settings:isTrue("input_lock_gsensor") then
+                UIManager:broadcastEvent(Event:new("LockGSensor"))
+                if G_reader_settings:isTrue("input_ignore_gsensor") then
+                    UIManager:broadcastEvent(Event:new("ToggleGSensor"))
+                end
+            else
+                UIManager:broadcastEvent(Event:new("ToggleGSensor"))
+            end
+            touch_menu:updateItems(1)
         end
     },
     usb = {
@@ -472,6 +499,7 @@ local function getActionDisplayNames()
         wifi = _("Wi-Fi"),
         night = _("Night"),
         rotate = _("Rotate"),
+        lock = _("Lock"),
         light = _("Light"),
         usb = _("USB"),
         restart = _("Restart"),
@@ -647,6 +675,7 @@ local function createQuickSettingsPanel(touch_menu)
 
         local fl_progress = ProgressWidget:new{
             width = frontlight_slider_width,
+            radius = Size.radius.button,
             height = frontlight_btn_height,
             percentage = fl.cur / fl.max,
             ticks = fl_ticks,
@@ -688,6 +717,7 @@ local function createQuickSettingsPanel(touch_menu)
         }
 
         -- Store progress ref for tap/pan handling
+        refs.fl_row = fl_row
         refs.fl_progress = fl_progress
         refs.fl_state = fl
         refs.setBrightness = setBrightness
@@ -818,7 +848,7 @@ local function createQuickSettingsPanel(touch_menu)
             text_font_size = location_text_size,
             show_parent = touch_menu.show_parent,
             callback = function()
-                -- touch_menu:closeMenu()
+                touch_menu:updateItems(1)
                 if filemanager and filemanager.history then
                     filemanager.history:onShowHist()
                 end
@@ -827,7 +857,7 @@ local function createQuickSettingsPanel(touch_menu)
                 end
             end,
             hold_callback = function()
-                -- touch_menu:closeMenu()
+                touch_menu:updateItems(1)
                 if filemanager and filemanager.menu then
                     filemanager.menu:onOpenLastDoc()
                 end
@@ -844,7 +874,7 @@ local function createQuickSettingsPanel(touch_menu)
             text_font_size = location_text_size,
             show_parent = touch_menu.show_parent,
             callback = function()
-                -- touch_menu:closeMenu()
+                touch_menu:updateItems(1)
                 if filemanager and filemanager.collections then
                     filemanager.collections:onShowCollList()
                 end
@@ -853,7 +883,7 @@ local function createQuickSettingsPanel(touch_menu)
                 end
             end,
             hold_callback = function()
-                -- touch_menu:closeMenu()
+                touch_menu:updateItems(1)
             end
         }
 
@@ -864,7 +894,7 @@ local function createQuickSettingsPanel(touch_menu)
             text_font_size = location_text_size,
             show_parent = touch_menu.show_parent,
             callback = function()
-                -- touch_menu:closeMenu()
+                touch_menu:updateItems(1)
                 if filemanager and filemanager.collections then
                     filemanager.collections:onShowColl()
                 end
@@ -873,7 +903,7 @@ local function createQuickSettingsPanel(touch_menu)
                 end
             end,
             hold_callback = function()
-                -- touch_menu:closeMenu()
+                touch_menu:updateItems(1)
             end
         }
 
@@ -913,11 +943,11 @@ local function createQuickSettingsPanel(touch_menu)
             text_font_size = search_text_size,
             show_parent = touch_menu.show_parent,
             callback = function()
-                -- touch_menu:closeMenu()
+                touch_menu:updateItems(1)
                 UIManager:broadcastEvent(Event:new("ShowCloudStorage"))
             end,
             hold_callback = function()
-                -- touch_menu:closeMenu()
+                touch_menu:updateItems(1)
                 if hasPlugin("opds") then
                     UIManager:broadcastEvent(Event:new("ShowOPDSCatalog"))
                 else
@@ -937,11 +967,11 @@ local function createQuickSettingsPanel(touch_menu)
             text_font_size = search_text_size,
             show_parent = touch_menu.show_parent,
             callback = function()
-                -- touch_menu:closeMenu()
+                touch_menu:updateItems(1)
                 UIManager:broadcastEvent(Event:new("ShowFileSearch"))
             end,
             hold_callback = function()
-                -- touch_menu:closeMenu()
+                touch_menu:updateItems(1)
                 if hasPlugin("calibre") then
                     UIManager:broadcastEvent(Event:new("CalibreSearch"))
                 else
@@ -961,11 +991,11 @@ local function createQuickSettingsPanel(touch_menu)
             text_font_size = search_text_size,
             show_parent = touch_menu.show_parent,
             callback = function()
-                -- touch_menu:closeMenu()
+                touch_menu:updateItems(1)
                 UIManager:broadcastEvent(Event:new("ShowDictionaryLookup"))
             end,
             hold_callback = function()
-                -- touch_menu:closeMenu()
+                touch_menu:updateItems(1)
                 UIManager:broadcastEvent(Event:new("ShowWikipediaLookup"))
             end,
         }
@@ -1036,11 +1066,11 @@ local function createQuickSettingsPanel(touch_menu)
             text_font_size = info_text_size,
             show_parent = touch_menu.show_parent,
             callback = function()
-                -- touch_menu:closeMenu()
+                touch_menu:updateItems(1)
                 reader.bookinfo:onShowBookDescription(false, reader.document.file)
             end,
             hold_callback = function()
-                -- touch_menu:closeMenu()
+                touch_menu:updateItems(1)
             end
         }
 
@@ -1051,7 +1081,7 @@ local function createQuickSettingsPanel(touch_menu)
             text_font_size = info_text_size,
             show_parent = touch_menu.show_parent,
             callback = function()
-                -- touch_menu:closeMenu()
+                touch_menu:updateItems(1)
                 if hasPlugin("statistics") then
                     UIManager:broadcastEvent(Event:new("ShowBookStats"))
                 else
@@ -1063,7 +1093,7 @@ local function createQuickSettingsPanel(touch_menu)
                 end
             end,
             hold_callback = function()
-                -- touch_menu:closeMenu()
+                touch_menu:updateItems(1)
             end
         }
 
@@ -1115,11 +1145,11 @@ local function createQuickSettingsPanel(touch_menu)
                 padding = 0,
                 radius = Size.radius.button,
                 callback = function()
-                    -- touch_menu:closeMenu()
+                    touch_menu:updateItems(1)
                     reader.bookinfo:onShowBookCover(reader.document.file)
                 end,
                 hold_callback = function()
-                    -- touch_menu:closeMenu()
+                    touch_menu:updateItems(1)
                 end
             }
 
@@ -1135,6 +1165,9 @@ local function createQuickSettingsPanel(touch_menu)
             table.insert(info_row, 1, HorizontalSpan:new{ width = info_gap })
             table.insert(info_row, 1, info_thumbnail)
         end
+
+        -- Store info_chapter ref for tap/pan handling
+        refs.info_chapter = info_chapter
 
         --
         table.insert(info_group, section_span)
@@ -1194,12 +1227,14 @@ local function createQuickSettingsPanel(touch_menu)
         local skim_progress = ProgressWidget:new{
             width = skim_progress_width,
             height = skim_btn_height,
+            radius = Size.radius.button,
             percentage = skim.curr_page / skim.page_count,
             ticks = reader.toc:getTocTicksFlattened(),
             tick_width = Size.line.medium,
             last = skim.page_count,
             alt = reader.document.flows,
             initial_pos_marker = true,
+            initial_percentage = (touch_menu._skim_orig_page or skim.curr_page ) / skim.page_count
         }
 
         local function updateSkimWidgets()
@@ -1217,18 +1252,18 @@ local function createQuickSettingsPanel(touch_menu)
 
         function addOriginToLocationStack()
             -- Only add the page from which we launched the SkimToWidget to the location stack
-            if not skim.orig_page_added_to_stack then
+            if not touch_menu._skim_orig_page then
                 reader.link:addCurrentLocationToStack()
-                skim.orig_page_added_to_stack = true
+                touch_menu._skim_orig_page = reader:getCurrentPage()
             end
         end
 
         function goToOrigPage()
-            if skim.orig_page_added_to_stack then
+            if touch_menu._skim_orig_page then
                 reader.link:onGoBackLink()
                 skim.curr_page = reader:getCurrentPage()
                 updateSkimWidgets()
-                skim.orig_page_added_to_stack = nil
+                touch_menu._skim_orig_page = nil
             end
         end
 
@@ -1510,6 +1545,10 @@ local BD = require("ui/bidi")
 -- Hook init to
 local orig_init = TouchMenu.init
     function TouchMenu:init()
+        -- store orig_page for initial_pos_marker in skim to survive redraw
+        self._skim_orig_page = nil
+
+        --
         if config.open_on_start then
             self.last_index = 1
         end
@@ -1598,7 +1637,6 @@ function TouchMenu:updateItems(target_page, target_item_id)
         time_info_txt = BD.wrap("✺") .. BD.wrap(intensity_lvl .. "%")
         if Device:hasNaturalLight() then
             local warmth_lvl = powerd:frontlightWarmth()
-            intensity_lvl = powerd:frontlightIntensity()
             time_info_txt = time_info_txt .. " " .. BD.wrap("⊛") .. BD.wrap(warmth_lvl .. "%")
         end
     end
