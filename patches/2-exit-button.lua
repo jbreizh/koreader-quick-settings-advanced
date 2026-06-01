@@ -1,10 +1,8 @@
 -- Exit button for KOReader top menu
 -- Add hold_callback on Exit button
--- Add exit button in filemanager : Tap->close menu
--- Remove filemanager button in Reader
--- Add exit button in filemanager : Tap->close menu Hold->close filemanager
-
-local UIManager = require("ui/uimanager")
+-- Add exit button in filemanager menu : Tap->close menu / Hold->close KOReader
+-- Remove filemanager button in reader menu
+-- Add exit button in reader menu : Tap->close menu / Hold->close filemanager
 
 -- Add hold_callback on Exit button
 
@@ -34,9 +32,11 @@ function TouchMenu:init(...)
     end
 end
 
--- Add exit button in filemanager : Tap->close menu
+-- Add exit button in filemanager menu : Tap->close menu / Hold->close KOReader
 
+local Event = require("ui/event")
 local FileManagerMenu = require("apps/filemanager/filemanagermenu")
+local UIManager = require("ui/uimanager")
 
 local orig_fm_setUpdateItemTable = FileManagerMenu.setUpdateItemTable
 
@@ -48,14 +48,17 @@ function FileManagerMenu:setUpdateItemTable()
         icon = "exit",
         remember = false,
         callback = function()
-            UIManager:close(self.menu_container)
+            self:onCloseFileManagerMenu()
         end,
+        hold_callback = function()
+            UIManager:broadcastEvent(Event:new("Exit"))
+        end
     }
     table.insert(self.tab_item_table, file_exit_tab)
 end
 
--- Remove filemanager button in Reader
--- Add exit button in filemanager : Tap->close menu Hold->close filemanager
+-- Remove filemanager button in reader menu
+-- Add exit button in reader menu : Tap->close menu / Hold->close filemanager
 
 local ReaderMenu = require("apps/reader/modules/readermenu")
 
@@ -76,7 +79,7 @@ function ReaderMenu:setUpdateItemTable()
         icon = "exit",
         remember = false,
         callback = function()
-            UIManager:close(self.menu_container)
+            self:onTapCloseMenu()
         end,
         hold_callback = function()
             self:onTapCloseMenu()
