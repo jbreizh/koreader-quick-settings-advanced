@@ -95,21 +95,18 @@ The Quick Settings patch can be configured from **Settings" (Gear icon) -> "Quic
 
 ### 2-exit-button.lua
 
-**In filemanager :** 
+**In filemanager :**  Add an exit button at the left size of the top menu.
 
 ![photo](./assets/exit_fm.jpg)
 
-Add an exit button with the standard cross icon at the left size of the top menu.
-
-This exit button close the top menu on tap.
-
-**In reader :**
+**In reader :** Remove filemanager button and add an exit button at the left size of the top menu.
 
 ![photo](./assets/exit_rd.jpg)
 
-Move the existing filemanager button to the left size of the top menu and change his icon with standard cross icon.
-
-This exit button close close the top menu on tap and open filemanager on hold.
+| Context | Tap | Hold |
+|:-------- |:--------:|:--------:|
+| Filemanager | Close menu | Quit Koreader |
+| Reader | Close menu | Quit Reader (launch Filemanager) |
 
 ### 2-menu-size.lua
 
